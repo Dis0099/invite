@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Поймай сердце 🍂</title>
+    <style>
+        /* ----- ОСЕННИЙ СТИЛЬ + ФИКСЫ ДЛЯ IPHONE ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #2d1b0e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+        }
+        #gameScreen {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            height: -webkit-fill-available;
+            max-height: 800px;
+            background: linear-gradient(180deg, #4a2818, #2d1b0e, #1a0f08);
+            border-radius: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(255, 150, 50, 0.25);
+            border: 1px solid #8b5a3c40;
+            touch-action: none;
+        }
+
+        @supports (-webkit-touch-callout: none) {
+            #gameScreen {
+                height: 100vh;
+                max-height: -webkit-fill-available;
+                border-radius: 0;
+            }
+        }
+
+        .leaves {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .leaf {
+            position: absolute;
+            font-size: 28px;
+            opacity: 0.25;
+            animation: fall linear infinite;
+            transform: rotate(0deg);
+            pointer-events: none;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 0.3; }
+            100% { transform: translateY(800px) rotate(720deg); opacity: 0.1; }
+        }
+
+        .autumn-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(255, 180, 50, 0.08), transparent 60%),
+                        radial-gradient(ellipse at 70% 80%, rgba(200, 80, 30, 0.08), transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #gameScreenContent {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            transition: opacity 0.5s;
+            touch-action: none;
+        }
+
+        .game-title {
+            text-align: center;
+            color: #f0d5b0;
+            padding-top: 40px;
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .game-title span {
+            display: block;
+            font-size: 14px;
+            color: #d4a373;
+            margin-top: 5px;
+        }
+
+        /* СЕРДЦЕ */
+        #heart {
+            position: absolute;
+            font-size: 70px;
+            cursor: pointer;
+            z-index: 10;
+            filter: drop-shadow(0 0 25px rgba(255, 120, 50, 0.6));
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: auto;
+            padding: 20px;
+            margin: -20px;
+        }
+        #heart:active {
+            transform: translate(-50%, -50%) scale(1.4) !important;
+        }
+
+        /* ТАЙМЕР */
+        .timer {
+            position: absolute;
+            bottom: 130px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #b58a6a;
+            font-size: 13px;
+            z-index: 2;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .timer b {
+            color: #e8a87c;
+            font-size: 18px;
+        }
+
+        .counter {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #b58a6a;
+            font-size: 14px;
+            z-index: 2;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .counter b {
+            color: #e8a87c;
+            font-size: 22px;
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #d4a373;
+            font-size: 13px;
+            z-index: 2;
+            animation: pulse 1.5s ease-in-out infinite;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        #inviteScreen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 15, 8, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 20;
+            padding: 30px 22px 25px;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #inviteScreen.show {
+            display: flex;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .invite-emoji {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .invite-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f0d5b0;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+        .invite-sub {
+            font-size: 14px;
+            color: #d4a373;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .divider {
+            width: 50px;
+            height: 2px;
+            background: linear-gradient(90deg, #e8a87c, #d4a373);
+            margin: 8px auto 16px;
+            border-radius: 10px;
+        }
+
+        .question-block {
+            margin-bottom: 20px;
+        }
+        .question-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f0d5b0;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .question-label small {
+            font-weight: 300;
+            color: #b58a6a;
+            font-size: 12px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .options-grid.single-col {
+            grid-template-columns: 1fr;
+        }
+        .option-btn {
+            background: #3d2415;
+            border: 2px solid #6b422a;
+            border-radius: 16px;
+            padding: 12px 10px;
+            color: #d4b59a;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-family: inherit;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+        .option-btn.selected {
+            border-color: #e8a87c;
+            background: #5a3220;
+            color: #f5e0c0;
+            box-shadow: 0 0 25px rgba(232, 168, 124, 0.2);
+        }
+        .option-btn .emoji {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .btn-send {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #e8a87c, #c77d4a);
+            border: none;
+            border-radius: 60px;
+            color: #2d1b0e;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(232, 168, 124, 0.3);
+            transition: 0.2s;
+            margin-top: 10px;
+            font-family: inherit;
+            touch-action: manipulation;
+        }
+        .btn-send:active {
+            transform: scale(0.95);
+        }
+        .btn-send:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            background: #6b422a;
+            color: #8b6a4a;
+        }
+
+        #finalScreen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            padding: 20px;
+            animation: fadeInUp 0.6s ease;
+        }
+        #finalScreen.show {
+            display: flex;
+        }
+        .final-emoji {
+            font-size: 80px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .final-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #f0d5b0;
+            margin: 10px 0 5px;
+        }
+        .final-sub {
+            font-size: 16px;
+            color: #d4a373;
+        }
+        .final-summary {
+            background: #3d2415;
+            border-radius: 20px;
+            padding: 18px;
+            margin: 15px 0 20px;
+            width: 100%;
+            border: 1px solid #6b422a;
+        }
+        .final-summary div {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #4a2a1a;
+            color: #d4b59a;
+            font-size: 15px;
+        }
+        .final-summary div:last-child {
+            border-bottom: none;
+        }
+        .final-summary .label {
+            color: #b58a6a;
+        }
+        .final-summary .value {
+            color: #f0d5b0;
+            font-weight: 600;
+        }
+
+        .btn-final {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #c77d4a, #a86438);
+            border: none;
+            border-radius: 60px;
+            color: #f5e0c0;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(200, 120, 60, 0.3);
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .btn-final:active {
+            transform: scale(0.95);
+        }
+
+        #inviteScreen::-webkit-scrollbar {
+            width: 4px;
+        }
+        #inviteScreen::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #inviteScreen::-webkit-scrollbar-thumb {
+            background: #e8a87c;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 480px) {
+            #gameScreen {
+                height: 100vh;
+                max-height: 800px;
+                border-radius: 0;
+            }
+            #heart {
+                font-size: 60px;
+            }
+            .options-grid {
+                gap: 8px;
+            }
+            .option-btn {
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) and (max-height: 700px) {
+            #gameScreen {
+                height: 100vh;
+                max-height: -webkit-fill-available;
+            }
+            .game-title {
+                padding-top: 20px;
+                font-size: 16px;
+            }
+            #heart {
+                font-size: 50px;
+            }
+            .option-btn {
+                padding: 8px 6px;
+                font-size: 13px;
+            }
+            .option-btn .emoji {
+                font-size: 22px;
+            }
+        }
+
+        .sending-status {
+            color: #f0d5b0;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 12px;
+            background: #3d2415;
+            display: none;
+        }
+        .sending-status.show {
+            display: block;
+            animation: fadeInUp 0.3s;
+        }
+        .sending-status.success {
+            border: 1px solid #8bc34a;
+            color: #c5e1a5;
+        }
+        .sending-status.error {
+            border: 1px solid #e91e63;
+            color: #ef9a9a;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameScreen">
+    <div class="leaves" id="leavesContainer"></div>
+    <div class="autumn-glow"></div>
+
+    <div id="gameScreenContent">
+        <div class="game-title">
+            🍂 ПОЙМАЙ СЕРДЦЕ
+            <span>кликни на него</span>
+        </div>
+        <div id="heart">❤️</div>
+        <div class="timer">⏳ Автоматический переход через <b id="timerSeconds">2</b> сек.</div>
+        <div class="hint">👆 Оно убегает! Лови!</div>
+        <div class="counter">
+            Попыток: <b id="clickCount">0</b>
+        </div>
+    </div>
+
+    <div id="inviteScreen">
+        <div class="invite-emoji">🍁</div>
+        <div class="invite-title">Ты поймала!</div>
+        <div class="invite-sub">Выбери, как мы проведём этот осенний вечер ❤️</div>
+        <div class="divider"></div>
+
+        <div class="question-block">
+            <span class="question-label">📅 Выбери дату <small>(когда тебе удобно)</small></span>
+            <div class="options-grid" id="dateOptions">
+                <button class="option-btn" data-value="16.09, 18:30">
+                    <span class="emoji">🗓️</span>
+                    16.09 — 18:30
+                </button>
+                <button class="option-btn" data-value="17.09, 18:30">
+                    <span class="emoji">🗓️</span>
+                    17.09 — 18:30
+                </button>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <span class="question-label">🎯 Что будем делать? <small>(выбери вариант)</small></span>
+            <div class="options-grid" id="activityOptions">
+                <button class="option-btn" data-value="Парк 🍂">
+                    <span class="emoji">🍂</span>
+                    Парк
+                </button>
+                <button class="option-btn" data-value="Кино 🎬">
+                    <span class="emoji">🎬</span>
+                    Кино
+                </button>
+                <button class="option-btn" data-value="Ресторан 🍽️">
+                    <span class="emoji">🍽️</span>
+                    Ресторан
+                </button>
+                <button class="option-btn" data-value="Прогулка в твоём месте 🏙️">
+                    <span class="emoji">🏙️</span>
+                    Твоё место
+                </button>
+                <button class="option-btn" data-value="Что-то особенное ✨">
+                    <span class="emoji">✨</span>
+                    Что-то особенное
+                </button>
+            </div>
+        </div>
+
+        <button class="btn-send" id="sendBtn" disabled>❤️ Отправить ответ</button>
+        <div class="sending-status" id="sendingStatus"></div>
+
+        <div id="finalScreen">
+            <div class="final-emoji">🍂🥰</div>
+            <div class="final-title">Договорились!</div>
+            <div class="final-sub">Я уже жду этого осеннего вечера ❤️</div>
+            <div class="final-summary" id="finalSummary">
+                <div><span class="label">📅 Дата</span><span class="value" id="finalDate">—</span></div>
+                <div><span class="label">🎯 Досуг</span><span class="value" id="finalActivity">—</span></div>
+            </div>
+            <button class="btn-final" id="finalBtn">💬 Напишу тебе!</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // ✅ НАСТРОЙКА TELEGRAM (ваши данные уже вставлены)
+    // ============================================================
+    const TELEGRAM_TOKEN = '8672201012:AAE05PBXpbdCP31tR8cAB7YqFo2nObwYMu4';
+    const TELEGRAM_CHAT_ID = '435696077';
+
+    // ============================================================
+    // 0. ОСЕННИЕ ЛИСТЬЯ
+    // ============================================================
+    const leavesEmojis = ['🍁', '🍂', '🌿', '🍃'];
+    const container = document.getElementById('leavesContainer');
+    for (let i = 0; i < 25; i++) {
+        const leaf = document.createElement('div');
+        leaf.className = 'leaf';
+        leaf.textContent = leavesEmojis[Math.floor(Math.random() * leavesEmojis.length)];
+        leaf.style.left = Math.random() * 100 + '%';
+        leaf.style.fontSize = (Math.random() * 20 + 16) + 'px';
+        leaf.style.animationDuration = (Math.random() * 8 + 10) + 's';
+        leaf.style.animationDelay = (Math.random() * 12) + 's';
+        leaf.style.opacity = Math.random() * 0.25 + 0.1;
+        container.appendChild(leaf);
+    }
+
+    // ============================================================
+    // 1. СЕРДЦЕ + ТАЙМЕР (2 секунды)
+    // ============================================================
+    const heart = document.getElementById('heart');
+    const clickCountSpan = document.getElementById('clickCount');
+    const timerSpan = document.getElementById('timerSeconds');
+    let clicks = 0;
+    let timer = 2;
+    let timerInterval = null;
+    let isInviteShown = false;
+
+    function moveHeart() {
+        if (isInviteShown) return;
+        const maxX = 90, minX = 10, maxY = 85, minY = 15;
+        heart.style.left = (Math.random() * (maxX - minX) + minX) + '%';
+        heart.style.top = (Math.random() * (maxY - minY) + minY) + '%';
+        heart.style.transform = 'translate(-50%, -50%)';
+    }
+
+    function showInvite() {
+        if (isInviteShown) return;
+        isInviteShown = true;
+        clearInterval(timerInterval);
+        clearInterval(moveInterval);
+        document.getElementById('inviteScreen').classList.add('show');
+        document.getElementById('gameScreenContent').style.opacity = '0';
+        document.getElementById('gameScreenContent').style.pointerEvents = 'none';
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+
+    // ОБРАБОТЧИК ДЛЯ СЕРДЦА
+    function onHeartTap(e) {
+        if (isInviteShown) return;
+        e.preventDefault();
+        e.stopPropagation();
+        clicks++;
+        clickCountSpan.textContent = clicks;
+
+        heart.style.transform = 'translate(-50%, -50%) scale(1.4)';
+        setTimeout(() => {
+            heart.style.transform = 'translate(-50%, -50%) scale(1)';
+        }, 150);
+
+        if (clicks >= 1) {
+            showInvite();
+            return;
+        }
+        moveHeart();
+    }
+
+    heart.addEventListener('click', onHeartTap);
+    heart.addEventListener('touchstart', function(e) {
+        // Пассивный обработчик для iPhone
+    }, { passive: true });
+
+    heart.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    // Движение сердца
+    let moveInterval = setInterval(() => {
+        if (!isInviteShown) {
+            moveHeart();
+        }
+    }, 1800);
+
+    // ============================================================
+    // 2. ТАЙМЕР (автоматический переход через 2 секунды)
+    // ============================================================
+    timerInterval = setInterval(() => {
+        if (isInviteShown) return;
+        timer--;
+        timerSpan.textContent = timer;
+        if (timer <= 0) {
+            showInvite();
+        }
+    }, 1000);
+
+    // ============================================================
+    // 3. ВЫБОР ДАТЫ И ДОСУГА
+    // ============================================================
+    let selectedDate = null;
+    let selectedActivity = null;
+
+    const dateOptions = document.querySelectorAll('#dateOptions .option-btn');
+    const activityOptions = document.querySelectorAll('#activityOptions .option-btn');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function selectOption(button, group) {
+        group.forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+
+        if (group === dateOptions) {
+            selectedDate = button.dataset.value;
+        } else if (group === activityOptions) {
+            selectedActivity = button.dataset.value;
+        }
+
+        sendBtn.disabled = !(selectedDate && selectedActivity);
+    }
+
+    dateOptions.forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectOption(this, dateOptions);
+            if (navigator.vibrate) navigator.vibrate(10);
+        });
+        btn.addEventListener('touchstart', function(e) {
+            // Пассивный обработчик для iPhone
+        }, { passive: true });
+    });
+
+    activityOptions.forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectOption(this, activityOptions);
+            if (navigator.vibrate) navigator.vibrate(10);
+        });
+        btn.addEventListener('touchstart', function(e) {
+            // Пассивный обработчик для iPhone
+        }, { passive: true });
+    });
+
+    // ============================================================
+    // 4. ОТПРАВКА В TELEGRAM
+    // ============================================================
+    const statusDiv = document.getElementById('sendingStatus');
+
+    async function sendToTelegram(date, activity) {
+        const message = `🍂 ОСЕННИЙ ОТВЕТ НА ПРИГЛАШЕНИЕ! 🍂\n\n📅 Дата: ${date}\n🎯 Досуг: ${activity}\n\n💕 Она(он) согласилась(лся)!`;
+        const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            });
+            const data = await response.json();
+            return data.ok;
+        } catch (error) {
+            console.error('Ошибка отправки:', error);
+            return false;
+        }
+    }
+
+    // ============================================================
+    // 5. КНОПКА ОТПРАВКИ
+    // ============================================================
+    sendBtn.addEventListener('click', async function() {
+        if (this.disabled) return;
+
+        statusDiv.textContent = '⏳ Отправляю твой ответ...';
+        statusDiv.className = 'sending-status show';
+        this.disabled = true;
+
+        const success = await sendToTelegram(selectedDate, selectedActivity);
+
+        if (success) {
+            statusDiv.textContent = '✅ Отправлено! Твой выбор сохранён ❤️';
+            statusDiv.className = 'sending-status show success';
+        } else {
+            statusDiv.textContent = '⚠️ Не удалось отправить, но я запомнил! ❤️';
+            statusDiv.className = 'sending-status show error';
+        }
+
+        document.getElementById('finalDate').textContent = selectedDate;
+        document.getElementById('finalActivity').textContent = selectedActivity;
+
+        setTimeout(() => {
+            document.querySelector('.invite-emoji').style.display = 'none';
+            document.querySelector('.invite-title').style.display = 'none';
+            document.querySelector('.invite-sub').style.display = 'none';
+            document.querySelector('.divider').style.display = 'none';
+            document.querySelectorAll('.question-block').forEach(el => el.style.display = 'none');
+            sendBtn.style.display = 'none';
+            statusDiv.style.display = 'none';
+
+            document.getElementById('finalScreen').classList.add('show');
+            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+            createConfetti();
+        }, 1000);
+    });
+
+    // ============================================================
+    // 6. ФИНАЛЬНАЯ КНОПКА
+    // ============================================================
+    document.getElementById('finalBtn').addEventListener('click', function() {
+        alert('🍂 Отлично! Я напишу тебе с деталями. Жди!');
+        if (navigator.vibrate) navigator.vibrate(20);
+    });
+
+    // ============================================================
+    // 7. ОСЕННЕЕ КОНФЕТТИ
+    // ============================================================
+    function createConfetti() {
+        const colors = ['#e8a87c', '#d4a373', '#c77d4a', '#f5d0b0', '#8b6a4a', '#f0c8a0'];
+        const container = document.getElementById('inviteScreen');
+        for (let i = 0; i < 40; i++) {
+            const confetti = document.createElement('div');
+            const isLeaf = Math.random() > 0.5;
+            confetti.style.cssText = `
+                position: absolute;
+                width: ${Math.random() * 8 + 4}px;
+                height: ${Math.random() * 8 + 4}px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                left: ${Math.random() * 100}%;
+                top: -10px;
+                border-radius: ${isLeaf ? '50% 0 50% 0' : '2px'};
+                opacity: ${Math.random() * 0.7 + 0.3};
+                pointer-events: none;
+                z-index: 999;
+                animation: confettiFall ${Math.random() * 2 + 2}s linear forwards;
+                animation-delay: ${Math.random() * 0.5}s;
+                transform: rotate(${Math.random() * 360}deg);
+            `;
+            container.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    }
+
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(700px) rotate(720deg) scale(0.3); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
+    console.log('🍂 Осеннее приглашение готово!');
+    console.log('❤️ Нажми на сердце или подожди 2 секунды для перехода.');
+</script>
+
+</body>
+</html>
