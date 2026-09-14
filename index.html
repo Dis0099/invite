@@ -241,6 +241,28 @@
         .sending-status.success { border: 1px solid #8bc34a; color: #c5e1a5; }
         .sending-status.error { border: 1px solid #e91e63; color: #ef9a9a; }
 
+        /* Уведомление об ошибке */
+        .error-notice {
+            display: none;
+            margin-top: 15px;
+            padding: 16px 18px;
+            background: rgba(233, 30, 99, 0.15);
+            border: 2px solid #e91e63;
+            border-radius: 16px;
+            color: #ffcdd2;
+            font-size: 15px;
+            line-height: 1.5;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        .error-notice.show { display: block; }
+        .error-notice b {
+            color: #ff8a80;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+
         #finalScreen {
             display: none;
             flex-direction: column;
@@ -337,6 +359,12 @@
         <button class="btn-send" id="sendBtn" disabled>❤️ Отправить ответ</button>
         <div class="sending-status" id="sendingStatus"></div>
 
+        <!-- Уведомление при ошибке -->
+        <div class="error-notice" id="errorNotice">
+            <b>⚠️ Сообщение не отправлено</b>
+            Пожалуйста, напиши мне, что ты выбрала ❤️
+        </div>
+
         <div id="finalScreen">
             <div class="final-emoji">🍂🥰</div>
             <div class="final-title">Договорились!</div>
@@ -413,6 +441,7 @@
     const sendBtn = document.getElementById('sendBtn');
     const customInputBlock = document.getElementById('customInputBlock');
     const customInput = document.getElementById('customInput');
+    const errorNotice = document.getElementById('errorNotice');
 
     function updateSendButton() {
         const activityFilled = selectedActivity === '__custom__'
@@ -424,6 +453,9 @@
     function selectOption(button, group, type) {
         group.forEach(b => b.classList.remove('selected'));
         button.classList.add('selected');
+
+        // Скрываем уведомление об ошибке при новом выборе
+        errorNotice.classList.remove('show');
 
         if (type === 'date') {
             selectedDate = button.dataset.value;
@@ -491,26 +523,38 @@
 
         statusDiv.textContent = '⏳ Отправляю...';
         statusDiv.className = 'sending-status show';
+        errorNotice.classList.remove('show');
         this.disabled = true;
 
         const ok = await sendToTelegram(selectedDate, finalActivity);
 
-        statusDiv.textContent = ok ? '✅ Отправлено! ❤️' : '⚠️ Не отправилось, но я запомнил!';
-        statusDiv.className = 'sending-status show ' + (ok ? 'success' : 'error');
+        if (ok) {
+            // УСПЕХ — показываем успех и финал
+            statusDiv.textContent = '✅ Отправлено! ❤️';
+            statusDiv.className = 'sending-status show success';
 
-        document.getElementById('finalDate').textContent = selectedDate;
-        document.getElementById('finalActivity').textContent = finalActivity;
+            document.getElementById('finalDate').textContent = selectedDate;
+            document.getElementById('finalActivity').textContent = finalActivity;
 
-        setTimeout(function() {
-            document.querySelector('.invite-title').style.display = 'none';
-            document.querySelector('.invite-sub').style.display = 'none';
-            document.querySelectorAll('.question-label').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.options-grid').forEach(el => el.style.display = 'none');
-            customInputBlock.style.display = 'none';
-            sendBtn.style.display = 'none';
-            statusDiv.style.display = 'none';
-            document.getElementById('finalScreen').classList.add('show');
-        }, 800);
+            setTimeout(function() {
+                document.querySelector('.invite-title').style.display = 'none';
+                document.querySelector('.invite-sub').style.display = 'none';
+                document.querySelectorAll('.question-label').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.options-grid').forEach(el => el.style.display = 'none');
+                customInputBlock.style.display = 'none';
+                sendBtn.style.display = 'none';
+                statusDiv.style.display = 'none';
+                errorNotice.style.display = 'none';
+                document.getElementById('finalScreen').classList.add('show');
+            }, 800);
+        } else {
+            // ОШИБКА — показываем уведомление
+            statusDiv.textContent = '';
+            statusDiv.className = 'sending-status';
+            errorNotice.classList.add('show');
+            // Возвращаем кнопку, чтобы можно было попробовать снова
+            this.disabled = false;
+        }
     });
 
     document.getElementById('finalBtn').addEventListener('click', function() {
