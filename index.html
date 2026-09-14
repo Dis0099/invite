@@ -171,6 +171,40 @@
             margin-bottom: 4px;
         }
 
+        /* Поле ввода для "Что-то своё" */
+        #customInputBlock {
+            display: none;
+            margin-top: 12px;
+        }
+        #customInputBlock.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #customInput {
+            width: 100%;
+            padding: 14px 16px;
+            background: #3d2415;
+            border: 2px solid #e8a87c;
+            border-radius: 16px;
+            color: #f5e0c0;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        #customInput::placeholder {
+            color: #8b6a4a;
+        }
+        #customInput:focus {
+            border-color: #f0c8a0;
+            box-shadow: 0 0 20px rgba(232, 168, 124, 0.3);
+        }
+
         .btn-send {
             width: 100%;
             padding: 18px;
@@ -271,7 +305,7 @@
             <span>нажми на него</span>
         </div>
         <div id="heart">❤️</div>
-        <div class="hint">👆 Нажми на сердце </div>
+        <div class="hint">👆 Нажми на сердце или подожди</div>
     </div>
 
     <!-- ЭКРАН 2 -->
@@ -291,7 +325,13 @@
             <button class="option-btn" data-value="Кино 🎬"><span class="emoji">🎬</span>Кино</button>
             <button class="option-btn" data-value="Ресторан 🍽️"><span class="emoji">🍽️</span>Ресторан</button>
             <button class="option-btn" data-value="Твоё место 🏙️"><span class="emoji">🏙️</span>Твоё место</button>
-            <button class="option-btn" data-value="Что-то особенное ✨"><span class="emoji">✨</span>Особенное</button>
+            <button class="option-btn" data-value="Боулинг, бильярд, картинг 🎳"><span class="emoji">🎳</span>Боулинг, бильярд, картинг</button>
+            <button class="option-btn" data-value="__custom__" id="customOptionBtn"><span class="emoji">✨</span>Что-то своё</button>
+        </div>
+
+        <!-- Поле ввода для "Что-то своё" -->
+        <div id="customInputBlock">
+            <input type="text" id="customInput" placeholder="Напиши свой вариант..." maxlength="100">
         </div>
 
         <button class="btn-send" id="sendBtn" disabled>❤️ Отправить ответ</button>
@@ -334,7 +374,7 @@
     }
 
     // ============================================================
-    // ПЕРЕХОД НА АНКЕТУ (клик по сердцу или автопереход через 3 сек)
+    // ПЕРЕХОД НА АНКЕТУ
     // ============================================================
     const heart = document.getElementById('heart');
     const gameScreen = document.getElementById('gameScreenContent');
@@ -349,7 +389,6 @@
         if (navigator.vibrate) navigator.vibrate(30);
     }
 
-    // Клик по сердцу
     heart.addEventListener('touchend', function(e) {
         e.preventDefault();
         showInvite();
@@ -360,7 +399,6 @@
         showInvite();
     });
 
-    // Автопереход через 3 секунды
     setTimeout(showInvite, 3000);
 
     // ============================================================
@@ -368,17 +406,38 @@
     // ============================================================
     let selectedDate = null;
     let selectedActivity = null;
+    let customActivity = '';
 
     const dateOptions = document.querySelectorAll('#dateOptions .option-btn');
     const activityOptions = document.querySelectorAll('#activityOptions .option-btn');
     const sendBtn = document.getElementById('sendBtn');
+    const customInputBlock = document.getElementById('customInputBlock');
+    const customInput = document.getElementById('customInput');
+
+    function updateSendButton() {
+        const activityFilled = selectedActivity === '__custom__'
+            ? customActivity.trim().length > 0
+            : selectedActivity !== null;
+        sendBtn.disabled = !(selectedDate && activityFilled);
+    }
 
     function selectOption(button, group, type) {
         group.forEach(b => b.classList.remove('selected'));
         button.classList.add('selected');
-        if (type === 'date') selectedDate = button.dataset.value;
-        else selectedActivity = button.dataset.value;
-        sendBtn.disabled = !(selectedDate && selectedActivity);
+
+        if (type === 'date') {
+            selectedDate = button.dataset.value;
+        } else {
+            selectedActivity = button.dataset.value;
+            // Показываем/скрываем поле ввода
+            if (selectedActivity === '__custom__') {
+                customInputBlock.classList.add('show');
+                setTimeout(() => customInput.focus(), 100);
+            } else {
+                customInputBlock.classList.remove('show');
+            }
+        }
+        updateSendButton();
     }
 
     dateOptions.forEach(btn => {
@@ -393,6 +452,12 @@
             selectOption(this, activityOptions, 'activity');
             if (navigator.vibrate) navigator.vibrate(10);
         });
+    });
+
+    // Следим за вводом текста
+    customInput.addEventListener('input', function() {
+        customActivity = this.value;
+        updateSendButton();
     });
 
     // ============================================================
@@ -422,23 +487,29 @@
     sendBtn.addEventListener('click', async function() {
         if (this.disabled) return;
 
+        // Если выбран "Что-то своё" — берём текст из поля
+        const finalActivity = selectedActivity === '__custom__'
+            ? `Своё: ${customActivity.trim()}`
+            : selectedActivity;
+
         statusDiv.textContent = '⏳ Отправляю...';
         statusDiv.className = 'sending-status show';
         this.disabled = true;
 
-        const ok = await sendToTelegram(selectedDate, selectedActivity);
+        const ok = await sendToTelegram(selectedDate, finalActivity);
 
         statusDiv.textContent = ok ? '✅ Отправлено! ❤️' : '⚠️ Не отправилось, но я запомнил!';
         statusDiv.className = 'sending-status show ' + (ok ? 'success' : 'error');
 
         document.getElementById('finalDate').textContent = selectedDate;
-        document.getElementById('finalActivity').textContent = selectedActivity;
+        document.getElementById('finalActivity').textContent = finalActivity;
 
         setTimeout(function() {
             document.querySelector('.invite-title').style.display = 'none';
             document.querySelector('.invite-sub').style.display = 'none';
             document.querySelectorAll('.question-label').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.options-grid').forEach(el => el.style.display = 'none');
+            customInputBlock.style.display = 'none';
             sendBtn.style.display = 'none';
             statusDiv.style.display = 'none';
             document.getElementById('finalScreen').classList.add('show');
