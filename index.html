@@ -184,6 +184,7 @@
             margin-bottom: 4px;
         }
 
+        /* Поле ввода для "Твоё место" */
         #customInputBlock {
             display: none;
             margin-top: 12px;
@@ -359,13 +360,14 @@
             <button class="option-btn" data-value="Парк 🍂"><span class="emoji">🍂</span>Парк</button>
             <button class="option-btn" data-value="Кино 🎬"><span class="emoji">🎬</span>Кино</button>
             <button class="option-btn" data-value="Ресторан 🍽️"><span class="emoji">🍽️</span>Ресторан</button>
-            <button class="option-btn" data-value="Твоё место 🏙️"><span class="emoji">🏙️</span>Твоё место</button>
+            <button class="option-btn" data-value="Твоё место 🏙️" id="yourPlaceBtn"><span class="emoji">🏙️</span>Твоё место</button>
             <button class="option-btn" data-value="Боулинг, бильярд, картинг 🎳"><span class="emoji">🎳</span>Боулинг, бильярд, картинг</button>
-            <button class="option-btn" data-value="__custom__" id="customOptionBtn"><span class="emoji">✨</span>Что-то своё</button>
+            <button class="option-btn" data-value="Что-то особенное ✨"><span class="emoji">✨</span>Что-то особенное</button>
         </div>
 
+        <!-- Поле ввода для "Твоё место" -->
         <div id="customInputBlock">
-            <input type="text" id="customInput" placeholder="Напиши свой вариант..." maxlength="100">
+            <input type="text" id="customInput" placeholder="Напиши, куда именно..." maxlength="100">
         </div>
 
         <button class="btn-send" id="sendBtn" disabled>❤️ Отправить ответ</button>
@@ -444,8 +446,8 @@
     // ВЫБОР ДАТЫ (одна) И ДОСУГА (несколько)
     // ============================================================
     let selectedDate = null;
-    let selectedActivities = []; // массив выбранных
-    let customActivity = '';
+    let selectedActivities = [];
+    let yourPlaceText = '';
 
     const dateOptions = document.querySelectorAll('#dateOptions .option-btn');
     const activityOptions = document.querySelectorAll('#activityOptions .option-btn');
@@ -454,16 +456,14 @@
     const customInput = document.getElementById('customInput');
     const errorNotice = document.getElementById('errorNotice');
 
-    // Обновление кнопки "Отправить"
     function updateSendButton() {
-        // Проверяем, что дата выбрана и есть хотя бы один вариант досуга
         const hasActivity = selectedActivities.length > 0;
-        // Если выбран "Что-то своё" — проверяем, что поле заполнено
-        const customFilled = !selectedActivities.includes('__custom__') || customActivity.trim().length > 0;
-        sendBtn.disabled = !(selectedDate && hasActivity && customFilled);
+        // Если выбрано "Твоё место" — проверяем, что поле заполнено
+        const yourPlaceFilled = !selectedActivities.includes('Твоё место 🏙️') || yourPlaceText.trim().length > 0;
+        sendBtn.disabled = !(selectedDate && hasActivity && yourPlaceFilled);
     }
 
-    // --- ДАТА (одиночный выбор) ---
+    // --- ДАТА ---
     dateOptions.forEach(btn => {
         btn.addEventListener('click', function() {
             dateOptions.forEach(b => b.classList.remove('selected'));
@@ -481,19 +481,17 @@
             const value = this.dataset.value;
 
             if (this.classList.contains('selected')) {
-                // Убираем выбор
                 this.classList.remove('selected');
                 selectedActivities = selectedActivities.filter(v => v !== value);
             } else {
-                // Добавляем выбор
                 this.classList.add('selected');
                 if (!selectedActivities.includes(value)) {
                     selectedActivities.push(value);
                 }
             }
 
-            // Показ/скрытие поля ввода для "Что-то своё"
-            if (selectedActivities.includes('__custom__')) {
+            // Показ/скрытие поля ввода для "Твоё место"
+            if (selectedActivities.includes('Твоё место 🏙️')) {
                 customInputBlock.classList.add('show');
                 setTimeout(() => customInput.focus(), 100);
             } else {
@@ -507,7 +505,7 @@
     });
 
     customInput.addEventListener('input', function() {
-        customActivity = this.value;
+        yourPlaceText = this.value;
         updateSendButton();
     });
 
@@ -517,9 +515,13 @@
     const statusDiv = document.getElementById('sendingStatus');
 
     async function sendToTelegram(date, activities) {
-        // Собираем строку с досугом
         const activityList = activities
-            .map(v => v === '__custom__' ? `Своё: ${customActivity.trim()}` : v)
+            .map(v => {
+                if (v === 'Твоё место 🏙️' && yourPlaceText.trim()) {
+                    return `Твоё место 🏙️ (${yourPlaceText.trim()})`;
+                }
+                return v;
+            })
             .join(', ');
 
         const message = `🍂 НОВЫЙ ОТВЕТ! 🍂\n\n📅 Дата: ${date}\n🎯 Досуг: ${activityList}\n\n💕 Согласилась(лся)!`;
@@ -543,9 +545,13 @@
     sendBtn.addEventListener('click', async function() {
         if (this.disabled) return;
 
-        // Формируем текст досуга для финального экрана
         const activityList = selectedActivities
-            .map(v => v === '__custom__' ? `Своё: ${customActivity.trim()}` : v)
+            .map(v => {
+                if (v === 'Твоё место 🏙️' && yourPlaceText.trim()) {
+                    return `Твоё место 🏙️ (${yourPlaceText.trim()})`;
+                }
+                return v;
+            })
             .join(', ');
 
         statusDiv.textContent = '⏳ Отправляю...';
