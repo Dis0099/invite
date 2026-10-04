@@ -354,7 +354,7 @@
 
         <span class="question-label">📅 Выбери дату</span>
         <div class="options-grid" id="dateOptions">
-            <button class="option-btn" data-value="03.10, 18:00"><span class="emoji">🗓️</span>03.10 — 18:00</button>
+            <button class="option-btn" data-value="08.10, 18:00"><span class="emoji">🗓️</span>08.10 — 18:00</button>
             <button class="option-btn" data-value="06.10, 18:30"><span class="emoji">🗓️</span>06.10 — 18:30</button>
         </div>
 
@@ -483,7 +483,6 @@
             this.classList.add('selected');
             selectedActivity = this.dataset.value;
 
-            // Показ/скрытие поля ввода
             if (selectedActivity === '__custom__') {
                 customInputBlock.classList.add('show');
                 setTimeout(() => customInput.focus(), 100);
