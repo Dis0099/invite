@@ -353,9 +353,8 @@
         <div class="invite-sub">Выбери, когда и где нам встретиться ❤️</div>
 
         <span class="question-label">📅 Выбери дату</span>
-        <div class="options-grid" id="dateOptions">
+        <div class="options-grid single-col" id="dateOptions">
             <button class="option-btn" data-value="08.10, 18:00"><span class="emoji">🗓️</span>08.10 — 18:00</button>
-            <button class="option-btn" data-value="06.10, 18:30"><span class="emoji">🗓️</span>06.10 — 18:30</button>
         </div>
 
         <span class="question-label">🎯 Куда пойдём?</span>
@@ -457,12 +456,19 @@
     const customInput = document.getElementById('customInput');
     const errorNotice = document.getElementById('errorNotice');
 
+    // Автовыбор единственной даты
+    if (dateOptions.length === 1) {
+        dateOptions[0].classList.add('selected');
+        selectedDate = dateOptions[0].dataset.value;
+    }
+
     function updateSendButton() {
         const activityFilled = selectedActivity === '__custom__'
             ? customActivity.trim().length > 0
             : selectedActivity !== null;
         sendBtn.disabled = !(selectedDate && activityFilled);
     }
+    updateSendButton();
 
     // --- ДАТА ---
     dateOptions.forEach(btn => {
