@@ -46,20 +46,17 @@
 
         /* ЭКРАН 1 */
         #gameScreenContent {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: relative;
             height: 100%;
             width: 100%;
-            padding: 20px;
             text-align: center;
         }
         .game-title {
             color: #f0d5b0;
             font-size: 20px;
             letter-spacing: 2px;
-            margin-bottom: 20px;
+            padding-top: 40px;
+            pointer-events: none;
         }
         .game-title span {
             display: block;
@@ -68,30 +65,40 @@
             margin-top: 8px;
         }
 
+        /* ДВИЖУЩЕЕСЯ СЕРДЦЕ */
         #heart {
-            font-size: 120px;
+            position: absolute;
+            font-size: 70px;
             cursor: pointer;
-            filter: drop-shadow(0 0 30px rgba(255, 120, 50, 0.7));
-            animation: heartbeat 1.2s ease-in-out infinite;
-            margin: 30px 0;
-            padding: 20px;
+            z-index: 10;
+            filter: drop-shadow(0 0 25px rgba(255, 120, 50, 0.6));
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
-        }
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            padding: 15px;
         }
         #heart:active {
-            animation: none;
-            transform: scale(1.3);
+            transform: translate(-50%, -50%) scale(1.4) !important;
         }
 
         .hint {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            text-align: center;
             color: #d4a373;
             font-size: 14px;
-            margin-top: 15px;
+            pointer-events: none;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
         }
 
         /* ЭКРАН 2 */
@@ -132,11 +139,6 @@
             color: #f0d5b0;
             display: block;
             margin: 15px 0 10px;
-        }
-        .question-label small {
-            font-weight: 300;
-            color: #b58a6a;
-            font-size: 12px;
         }
 
         .options-grid {
@@ -344,7 +346,7 @@
             <span>нажми на него</span>
         </div>
         <div id="heart">❤️</div>
-        <div class="hint">👆 Нажми на сердце</div>
+        <div class="hint">👆 Оно убегает! Лови!</div>
     </div>
 
     <!-- ЭКРАН 2 -->
@@ -365,7 +367,6 @@
             <button class="option-btn" data-value="__custom__"><span class="emoji">✨</span>Твой вариант</button>
         </div>
 
-        <!-- Поле ввода для "Твой вариант" -->
         <div id="customInputBlock">
             <input type="text" id="customInput" placeholder="Напиши свой вариант..." maxlength="100">
         </div>
@@ -415,32 +416,52 @@
     }
 
     // ============================================================
-    // ПЕРЕХОД НА АНКЕТУ
+    // ДВИЖУЩЕЕСЯ СЕРДЦЕ + ПЕРЕХОД ПО КЛИКУ
     // ============================================================
     const heart = document.getElementById('heart');
     const gameScreen = document.getElementById('gameScreenContent');
     const inviteScreen = document.getElementById('inviteScreen');
     let isShown = false;
 
+    function moveHeart() {
+        if (isShown) return;
+        const maxX = 80, minX = 20, maxY = 75, minY = 20;
+        heart.style.left = (Math.random() * (maxX - minX) + minX) + '%';
+        heart.style.top = (Math.random() * (maxY - minY) + minY) + '%';
+        heart.style.transform = 'translate(-50%, -50%)';
+    }
+
     function showInvite() {
         if (isShown) return;
         isShown = true;
+        clearInterval(moveInterval);
         inviteScreen.classList.add('show');
         gameScreen.style.display = 'none';
         if (navigator.vibrate) navigator.vibrate(30);
     }
 
+    // Движение сердца каждые 1.8 сек
+    let moveInterval = setInterval(moveHeart, 1800);
+    // Начальное смещение
+    setTimeout(moveHeart, 500);
+
+    // Клик по сердцу
     heart.addEventListener('touchend', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         showInvite();
     }, { passive: false });
 
     heart.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         showInvite();
     });
 
-    setTimeout(showInvite, 3000);
+    // Защита от скролла при касании сердца
+    heart.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
 
     // ============================================================
     // ВЫБОР ДАТЫ И МЕСТА
