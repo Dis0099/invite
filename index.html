@@ -141,13 +141,36 @@
             margin: 15px 0 10px;
         }
 
+        /* Поле ввода даты */
+        #dateInput {
+            width: 100%;
+            padding: 14px 16px;
+            background: #3d2415;
+            border: 2px solid #6b422a;
+            border-radius: 16px;
+            color: #f5e0c0;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: all 0.2s;
+        }
+        #dateInput::placeholder {
+            color: #8b6a4a;
+        }
+        #dateInput:focus {
+            border-color: #e8a87c;
+            box-shadow: 0 0 20px rgba(232, 168, 124, 0.3);
+        }
+        #dateInput.filled {
+            border-color: #e8a87c;
+        }
+
         .options-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .options-grid.single-col {
             grid-template-columns: 1fr;
+            gap: 10px;
         }
         .option-btn {
             background: #3d2415;
@@ -184,43 +207,32 @@
             font-size: 16px;
         }
         .option-btn .emoji {
-            display: block;
-            font-size: 26px;
-            margin-bottom: 4px;
+            display: inline-block;
+            font-size: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
         }
 
-        /* Поле ввода для "Твой вариант" */
-        #customInputBlock {
+        /* Выбор ресторана */
+        #restaurantChoice {
             display: none;
             margin-top: 12px;
-        }
-        #customInputBlock.show {
-            display: block;
             animation: fadeIn 0.3s ease;
         }
+        #restaurantChoice.show {
+            display: block;
+        }
+        #restaurantChoice .options-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        #restaurantChoice .option-btn {
+            padding: 12px 10px;
+            font-size: 14px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        #customInput {
-            width: 100%;
-            padding: 14px 16px;
-            background: #3d2415;
-            border: 2px solid #e8a87c;
-            border-radius: 16px;
-            color: #f5e0c0;
-            font-size: 16px;
-            font-family: inherit;
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        #customInput::placeholder {
-            color: #8b6a4a;
-        }
-        #customInput:focus {
-            border-color: #f0c8a0;
-            box-shadow: 0 0 20px rgba(232, 168, 124, 0.3);
         }
 
         .btn-send {
@@ -352,23 +364,25 @@
     <!-- ЭКРАН 2 -->
     <div id="inviteScreen">
         <div class="invite-title">🍁 Ты поймала!</div>
-        <div class="invite-sub">Выбери, когда и где нам встретиться ❤️</div>
+        <div class="invite-sub">Выбери, когда и куда пойдём ❤️</div>
 
-        <span class="question-label">📅 Выбери дату</span>
-        <div class="options-grid single-col" id="dateOptions">
-            <button class="option-btn" data-value="08.10, 18:30"><span class="emoji">🗓️</span>08.10 — 18:30</button>
-        </div>
+        <span class="question-label">📅 Напиши дату</span>
+        <input type="text" id="dateInput" placeholder="Например: 08.10, 18:00" maxlength="50">
 
         <span class="question-label">🎯 Куда пойдём?</span>
         <div class="options-grid" id="activityOptions">
             <button class="option-btn" data-value="Парк 🌳"><span class="emoji">🌳</span>Парк</button>
-            <button class="option-btn" data-value="Кино 🎬"><span class="emoji">🎬</span>Кино</button>
-            <button class="option-btn" data-value="Погуляем в центре 🏙️"><span class="emoji">🏙️</span>Погуляем в центре</button>
-            <button class="option-btn" data-value="__custom__"><span class="emoji">✨</span>Твой вариант</button>
+            <button class="option-btn" data-value="Стрелковый клуб 🎯"><span class="emoji">🎯</span>Стрелковый клуб</button>
+            <button class="option-btn" data-value="Ресторан 🍽️"><span class="emoji">🍽️</span>Ресторан</button>
         </div>
 
-        <div id="customInputBlock">
-            <input type="text" id="customInput" placeholder="Напиши свой вариант..." maxlength="100">
+        <!-- Выбор ресторана -->
+        <div id="restaurantChoice">
+            <span class="question-label">🍽️ Выбери ресторан</span>
+            <div class="options-grid" id="restaurantOptions">
+                <button class="option-btn" data-value="Miraclub">Miraclub</button>
+                <button class="option-btn" data-value="The Хинкали">The Хинкали</button>
+            </div>
         </div>
 
         <button class="btn-send" id="sendBtn" disabled>❤️ Отправить ответ</button>
@@ -396,7 +410,7 @@
     // ============================================================
     // TELEGRAM
     // ============================================================
-    const TELEGRAM_TOKEN = '8672201012:AAE05PBXpbdCP31tR8cAB7YqFo2nObwYMu4';
+    const TELEGRAM_TOKEN = '8672201012:AAExE54YfYl-51m6pOiQMAO4hoW1I0cDTcU';
     const TELEGRAM_CHAT_ID = '435696077';
 
     // ============================================================
@@ -416,7 +430,7 @@
     }
 
     // ============================================================
-    // ДВИЖУЩЕЕСЯ СЕРДЦЕ + ПЕРЕХОД ПО КЛИКУ
+    // ДВИЖУЩЕЕСЯ СЕРДЦЕ
     // ============================================================
     const heart = document.getElementById('heart');
     const gameScreen = document.getElementById('gameScreenContent');
@@ -440,12 +454,9 @@
         if (navigator.vibrate) navigator.vibrate(30);
     }
 
-    // Движение сердца каждые 1.8 сек
     let moveInterval = setInterval(moveHeart, 1800);
-    // Начальное смещение
     setTimeout(moveHeart, 500);
 
-    // Клик по сердцу
     heart.addEventListener('touchend', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -458,49 +469,44 @@
         showInvite();
     });
 
-    // Защита от скролла при касании сердца
     heart.addEventListener('touchmove', function(e) {
         e.preventDefault();
     }, { passive: false });
 
     // ============================================================
-    // ВЫБОР ДАТЫ И МЕСТА
+    // ВЫБОР ДАТЫ, МЕСТА И РЕСТОРАНА
     // ============================================================
-    let selectedDate = null;
+    let selectedDate = '';
     let selectedActivity = null;
-    let customActivity = '';
+    let selectedRestaurant = null;
 
-    const dateOptions = document.querySelectorAll('#dateOptions .option-btn');
+    const dateInput = document.getElementById('dateInput');
     const activityOptions = document.querySelectorAll('#activityOptions .option-btn');
+    const restaurantOptions = document.querySelectorAll('#restaurantOptions .option-btn');
+    const restaurantChoice = document.getElementById('restaurantChoice');
     const sendBtn = document.getElementById('sendBtn');
-    const customInputBlock = document.getElementById('customInputBlock');
-    const customInput = document.getElementById('customInput');
     const errorNotice = document.getElementById('errorNotice');
 
-    // Автовыбор единственной даты
-    if (dateOptions.length === 1) {
-        dateOptions[0].classList.add('selected');
-        selectedDate = dateOptions[0].dataset.value;
-    }
-
     function updateSendButton() {
-        const activityFilled = selectedActivity === '__custom__'
-            ? customActivity.trim().length > 0
-            : selectedActivity !== null;
-        sendBtn.disabled = !(selectedDate && activityFilled);
+        let activityFilled = false;
+        if (selectedActivity === 'Ресторан 🍽️') {
+            activityFilled = selectedRestaurant !== null;
+        } else if (selectedActivity) {
+            activityFilled = true;
+        }
+        sendBtn.disabled = !(selectedDate.trim() && activityFilled);
     }
-    updateSendButton();
 
     // --- ДАТА ---
-    dateOptions.forEach(btn => {
-        btn.addEventListener('click', function() {
-            dateOptions.forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedDate = this.dataset.value;
-            errorNotice.classList.remove('show');
-            updateSendButton();
-            if (navigator.vibrate) navigator.vibrate(10);
-        });
+    dateInput.addEventListener('input', function() {
+        selectedDate = this.value;
+        if (this.value.trim()) {
+            this.classList.add('filled');
+        } else {
+            this.classList.remove('filled');
+        }
+        errorNotice.classList.remove('show');
+        updateSendButton();
     });
 
     // --- МЕСТО ---
@@ -510,11 +516,14 @@
             this.classList.add('selected');
             selectedActivity = this.dataset.value;
 
-            if (selectedActivity === '__custom__') {
-                customInputBlock.classList.add('show');
-                setTimeout(() => customInput.focus(), 100);
+            // Показ выбора ресторана
+            if (selectedActivity === 'Ресторан 🍽️') {
+                restaurantChoice.classList.add('show');
             } else {
-                customInputBlock.classList.remove('show');
+                restaurantChoice.classList.remove('show');
+                // Сброс выбора ресторана
+                restaurantOptions.forEach(b => b.classList.remove('selected'));
+                selectedRestaurant = null;
             }
 
             errorNotice.classList.remove('show');
@@ -523,9 +532,16 @@
         });
     });
 
-    customInput.addEventListener('input', function() {
-        customActivity = this.value;
-        updateSendButton();
+    // --- РЕСТОРАН ---
+    restaurantOptions.forEach(btn => {
+        btn.addEventListener('click', function() {
+            restaurantOptions.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedRestaurant = this.dataset.value;
+            errorNotice.classList.remove('show');
+            updateSendButton();
+            if (navigator.vibrate) navigator.vibrate(10);
+        });
     });
 
     // ============================================================
@@ -533,10 +549,11 @@
     // ============================================================
     const statusDiv = document.getElementById('sendingStatus');
 
-    async function sendToTelegram(date, activity) {
-        const finalActivity = activity === '__custom__'
-            ? `Твой вариант: ${customActivity.trim()}`
-            : activity;
+    async function sendToTelegram(date, activity, restaurant) {
+        let finalActivity = activity;
+        if (activity === 'Ресторан 🍽️' && restaurant) {
+            finalActivity = `Ресторан 🍽️ (${restaurant})`;
+        }
 
         const message = `🍂 НОВЫЙ ОТВЕТ! 🍂\n\n📅 Дата: ${date}\n🎯 Место: ${finalActivity}\n\n💕 Согласилась(лся)!`;
         try {
@@ -559,22 +576,23 @@
     sendBtn.addEventListener('click', async function() {
         if (this.disabled) return;
 
-        const finalActivity = selectedActivity === '__custom__'
-            ? `Твой вариант: ${customActivity.trim()}`
-            : selectedActivity;
+        let finalActivity = selectedActivity;
+        if (selectedActivity === 'Ресторан 🍽️' && selectedRestaurant) {
+            finalActivity = `Ресторан 🍽️ (${selectedRestaurant})`;
+        }
 
         statusDiv.textContent = '⏳ Отправляю...';
         statusDiv.className = 'sending-status show';
         errorNotice.classList.remove('show');
         this.disabled = true;
 
-        const ok = await sendToTelegram(selectedDate, selectedActivity);
+        const ok = await sendToTelegram(selectedDate.trim(), selectedActivity, selectedRestaurant);
 
         if (ok) {
             statusDiv.textContent = '✅ Отправлено! ❤️';
             statusDiv.className = 'sending-status show success';
 
-            document.getElementById('finalDate').textContent = selectedDate;
+            document.getElementById('finalDate').textContent = selectedDate.trim();
             document.getElementById('finalActivity').textContent = finalActivity;
 
             setTimeout(function() {
@@ -582,7 +600,8 @@
                 document.querySelector('.invite-sub').style.display = 'none';
                 document.querySelectorAll('.question-label').forEach(el => el.style.display = 'none');
                 document.querySelectorAll('.options-grid').forEach(el => el.style.display = 'none');
-                customInputBlock.style.display = 'none';
+                dateInput.style.display = 'none';
+                restaurantChoice.style.display = 'none';
                 sendBtn.style.display = 'none';
                 statusDiv.style.display = 'none';
                 errorNotice.style.display = 'none';
